@@ -16,6 +16,11 @@ typedef struct {
   float TexCoord[2];
 } Vertex;
 
+typedef struct{
+  float rotate[3];
+  float translate[2];
+} TransformInfo;
+
 Vertex vertexes[] = {
   {{1, 1},  {1, 0}},
   {{1, -1}, {1, 1}},
@@ -50,8 +55,22 @@ static void error_callback(int error, const char* description)
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+  TransformInfo *info = glfwGetWindowUserPointer(window);
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
+  }
+  else if(key == GLFW_KEY_LEFT && (action == GLFW_REPEAT || action == GLFW_PRESS)){
+    (*info).translate[0] -= 0.025;
+  }
+  else if(key == GLFW_KEY_RIGHT && (action == GLFW_REPEAT || action == GLFW_PRESS)){
+    (*info).translate[0] += 0.025;
+  }
+  else if(key == GLFW_KEY_DOWN && (action == GLFW_REPEAT || action == GLFW_PRESS)){
+    (*info).translate[1] -= 0.025;
+  }
+  else if(key == GLFW_KEY_UP && (action == GLFW_REPEAT || action == GLFW_PRESS)){
+    (*info).translate[1] += 0.025;
+  }
 }
 
 void glCompileShaderOrDie(GLuint shader) {
@@ -72,34 +91,6 @@ void glCompileShaderOrDie(GLuint shader) {
     exit(1);
   }
 }
-
-// 4 x 4 image..
-unsigned char image[] = {
-  255, 0, 0, 255,
-  255, 0, 0, 255,
-  255, 0, 0, 255,
-  255, 0, 0, 255,
-
-  0, 255, 0, 255,
-  0, 255, 0, 255,
-  0, 255, 0, 255,
-  0, 255, 0, 255,
-
-  0, 0, 255, 255,
-  0, 0, 255, 255,
-  0, 0, 255, 255,
-  0, 0, 255, 255,
-
-  255, 0, 255, 255,
-  255, 0, 255, 255,
-  255, 0, 255, 255,
-  255, 0, 255, 255,
-
-  255, 100, 255, 255,
-  255, 100, 255, 255,
-  255, 100, 255, 255,
-  255, 100, 255, 255
-};
 
 int main(int argc, char* argv[]){
 
@@ -181,38 +172,44 @@ int main(int argc, char* argv[]){
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, inputImage->width, inputImage->height, 0, GL_RGB, GL_UNSIGNED_BYTE, imagedata);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texID);
-    glUniform1i(tex_location, 0);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texID);
+  glUniform1i(tex_location, 0);
 
-    while (!glfwWindowShouldClose(window))
-    {
-      float ratio;
-      int width, height;
-      mat4x4 m, p, mvp;
+  TransformInfo info ;
+  glfwSetWindowUserPointer(window, &info);
 
-      glfwGetFramebufferSize(window, &width, &height);
-      ratio = width / (float) height;
+  while (!glfwWindowShouldClose(window))
+  {
+    float ratio;
+    int width, height;
+    mat4x4 m, p, mvp;
 
-      glViewport(0, 0, width, height);
-      glClear(GL_COLOR_BUFFER_BIT);
 
-      mat4x4_identity(m);
-      //mat4x4_rotate_Z(m, m, (float) glfwGetTime());
-      mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-      mat4x4_mul(mvp, p, m);
+    glfwGetFramebufferSize(window, &width, &height);
+    ratio = width / (float) height;
 
-      glUseProgram(program);
-      glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
-      glDrawArrays(GL_TRIANGLES, 0, 3);
+    glViewport(0, 0, width, height);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-      glDrawArrays(GL_TRIANGLES, 1, 3);
-      glfwSwapBuffers(window);
-      glfwPollEvents();
-    }
+    mat4x4_identity(m);
+    //mat4x4_scale(m, m, (float) glfwGetTime() *1000);
+    mat4x4_translate(m, info.translate[0], info.translate[1], 0);
+    //mat4x4_rotate_Z(m, m, info.rotate[2]);
+    mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+    mat4x4_mul(mvp, p, m);
 
-    glfwDestroyWindow(window);
+    glUseProgram(program);
+    glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 
-    glfwTerminate();
-    exit(EXIT_SUCCESS);
+    glDrawArrays(GL_TRIANGLES, 1, 3);
+    glfwSwapBuffers(window);
+    glfwPollEvents();
   }
+
+  glfwDestroyWindow(window);
+
+  glfwTerminate();
+  exit(EXIT_SUCCESS);
+}
