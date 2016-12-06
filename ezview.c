@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "ppmread.h"
+
 #define GLFW_TRUE 1
 
 typedef struct {
@@ -15,10 +17,10 @@ typedef struct {
 } Vertex;
 
 Vertex vertexes[] = {
-  {{1, 1},  {0.99999, 0.99999}},
-  {{1, -1}, {0.99999, 0}},
-  {{-1, 1}, {0, 0.99999}},
-  {{-1, -1}, {0, 0}}
+  {{1, 1},  {1, 0}},
+  {{1, -1}, {1, 1}},
+  {{-1, 1}, {0, 0}},
+  {{-1, -1}, {0, 1}}
 };
 
 
@@ -91,95 +93,93 @@ unsigned char image[] = {
   255, 0, 255, 255,
   255, 0, 255, 255,
   255, 0, 255, 255,
-  255, 0, 255, 255
+  255, 0, 255, 255,
+
+  255, 100, 255, 255,
+  255, 100, 255, 255,
+  255, 100, 255, 255,
+  255, 100, 255, 255
 };
 
-int main(void)
-{
-    GLFWwindow* window;
-    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-    GLint mvp_location, vpos_location;//, vcol_location;
+int main(int argc, char* argv[]){
 
-    glfwSetErrorCallback(error_callback);
+  if(argc != 2){
+    fprintf(stderr, "Error : Wrong number of argument, expected ./ezview inputImageName\n");
+    exit(1);
+  }
+  ppmImage inputImage = openImage(argv[1]);
+  unsigned char* imagedata = getImageData(inputImage);
 
-    if (!glfwInit())
-        exit(EXIT_FAILURE);
+  GLFWwindow* window;
+  GLuint vertex_buffer, vertex_shader, fragment_shader, program;
+  GLint mvp_location, vpos_location;//, vcol_location;
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  glfwSetErrorCallback(error_callback);
 
-    window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
+  if (!glfwInit())
+  exit(EXIT_FAILURE);
 
-    glfwSetKeyCallback(window, key_callback);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    glfwMakeContextCurrent(window);
-    // gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-    glfwSwapInterval(1);
+  window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+  if (!window)
+  {
+    glfwTerminate();
+    exit(EXIT_FAILURE);
+  }
 
-    // NOTE: OpenGL error checks have been omitted for brevity
+  glfwSetKeyCallback(window, key_callback);
 
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexes), vertexes, GL_STATIC_DRAW);
+  glfwMakeContextCurrent(window);
+  // gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+  glfwSwapInterval(1);
 
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-    glCompileShaderOrDie(vertex_shader);
+  // NOTE: OpenGL error checks have been omitted for brevity
 
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-    glCompileShaderOrDie(fragment_shader);
+  glGenBuffers(1, &vertex_buffer);
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexes), vertexes, GL_STATIC_DRAW);
 
-    program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-    // more error checking! glLinkProgramOrDie!
+  vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
+  glCompileShaderOrDie(vertex_shader);
 
-    mvp_location = glGetUniformLocation(program, "MVP");
-    assert(mvp_location != -1);
+  fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
+  glCompileShaderOrDie(fragment_shader);
 
-    vpos_location = glGetAttribLocation(program, "vPos");
-    assert(vpos_location != -1);
+  program = glCreateProgram();
+  glAttachShader(program, vertex_shader);
+  glAttachShader(program, fragment_shader);
+  glLinkProgram(program);
+  // more error checking! glLinkProgramOrDie!
 
-    GLint texcoord_location = glGetAttribLocation(program, "TexCoordIn");
-    assert(texcoord_location != -1);
+  mvp_location = glGetUniformLocation(program, "MVP");
+  assert(mvp_location != -1);
 
-    GLint tex_location = glGetUniformLocation(program, "Texture");
-    assert(tex_location != -1);
+  vpos_location = glGetAttribLocation(program, "vPos");
+  assert(vpos_location != -1);
 
-    glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location,
-			  2,
-			  GL_FLOAT,
-			  GL_FALSE,
-                          sizeof(Vertex),
-			  (void*) 0);
+  GLint texcoord_location = glGetAttribLocation(program, "TexCoordIn");
+  assert(texcoord_location != -1);
 
-    glEnableVertexAttribArray(texcoord_location);
-    glVertexAttribPointer(texcoord_location,
-			  2,
-			  GL_FLOAT,
-			  GL_FALSE,
-                          sizeof(Vertex),
-			  (void*) (sizeof(float) * 2));
+  GLint tex_location = glGetUniformLocation(program, "Texture");
+  assert(tex_location != -1);
 
-    int image_width = 4;
-    int image_height = 4;
+  glEnableVertexAttribArray(vpos_location);
+  glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) 0);
 
-    GLuint texID;
-    glGenTextures(1, &texID);
-    glBindTexture(GL_TEXTURE_2D, texID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glEnableVertexAttribArray(texcoord_location);
+  glVertexAttribPointer(texcoord_location, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) (sizeof(float) * 2));
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA,
-		 GL_UNSIGNED_BYTE, image);
+  GLuint texID;
+  glGenTextures(1, &texID);
+  glBindTexture(GL_TEXTURE_2D, texID);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, inputImage->width, inputImage->height, 0, GL_RGB, GL_UNSIGNED_BYTE, imagedata);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texID);
@@ -187,32 +187,32 @@ int main(void)
 
     while (!glfwWindowShouldClose(window))
     {
-        float ratio;
-        int width, height;
-        mat4x4 m, p, mvp;
+      float ratio;
+      int width, height;
+      mat4x4 m, p, mvp;
 
-        glfwGetFramebufferSize(window, &width, &height);
-        ratio = width / (float) height;
+      glfwGetFramebufferSize(window, &width, &height);
+      ratio = width / (float) height;
 
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT);
+      glViewport(0, 0, width, height);
+      glClear(GL_COLOR_BUFFER_BIT);
 
-        mat4x4_identity(m);
-        //mat4x4_rotate_Z(m, m, (float) glfwGetTime());
-        mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-        mat4x4_mul(mvp, p, m);
+      mat4x4_identity(m);
+      //mat4x4_rotate_Z(m, m, (float) glfwGetTime());
+      mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+      mat4x4_mul(mvp, p, m);
 
-        glUseProgram(program);
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+      glUseProgram(program);
+      glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
+      glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        glDrawArrays(GL_TRIANGLES, 1, 3);
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+      glDrawArrays(GL_TRIANGLES, 1, 3);
+      glfwSwapBuffers(window);
+      glfwPollEvents();
     }
 
     glfwDestroyWindow(window);
 
     glfwTerminate();
     exit(EXIT_SUCCESS);
-}
+  }

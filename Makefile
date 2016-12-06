@@ -4,8 +4,14 @@ NAME = ezview
 
 all: $(NAME)
 
-$(NAME): $(NAME).c
-	$(COMPIL) -o $(NAME) $(NAME).c $(FLAG)
+ppmread.o: ppmread.c
+	$(COMPIL) -c ppmread.c $(FLAG)
+
+$(NAME).o: $(NAME).c
+	$(COMPIL) -c $(NAME).c $(FLAG)
+
+$(NAME): $(NAME).o ppmread.o
+	$(COMPIL) -o $(NAME) $(NAME).o ppmread.o $(FLAG)
 
 clean:
-	rm $(NAME)
+	rm $(NAME) *.o
