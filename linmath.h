@@ -577,4 +577,6 @@ static inline void quat_from_mat4x4(quat q, mat4x4 M)
 	q[3] = (M[p[2]][p[1]] - M[p[1]][p[2]])/(2.f*r);
 }
 
+//static inline void mat4x4_print(mat4x4 M)
+
 #endif
