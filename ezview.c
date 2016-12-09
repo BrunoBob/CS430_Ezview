@@ -71,6 +71,24 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
   else if(key == GLFW_KEY_UP && (action == GLFW_REPEAT || action == GLFW_PRESS)){
     (*info).translate[1] += 0.025;
   }
+  else if((key == GLFW_KEY_1 || key == GLFW_KEY_KP_1) && (action == GLFW_REPEAT || action == GLFW_PRESS)){
+    (*info).rotate[2] += 0.025;
+  }
+  else if((key == GLFW_KEY_3 || key == GLFW_KEY_KP_3) && (action == GLFW_REPEAT || action == GLFW_PRESS)){
+    (*info).rotate[2] -= 0.025;
+  }
+  else if((key == GLFW_KEY_4 || key == GLFW_KEY_KP_4) && (action == GLFW_REPEAT || action == GLFW_PRESS)){
+    (*info).rotate[1] += 0.025;
+  }
+  else if((key == GLFW_KEY_6 || key == GLFW_KEY_KP_6) && (action == GLFW_REPEAT || action == GLFW_PRESS)){
+    (*info).rotate[1] -= 0.025;
+  }
+  else if((key == GLFW_KEY_8 || key == GLFW_KEY_KP_8) && (action == GLFW_REPEAT || action == GLFW_PRESS)){
+    (*info).rotate[0] += 0.025;
+  }
+  else if((key == GLFW_KEY_2 || key == GLFW_KEY_KP_2) && (action == GLFW_REPEAT || action == GLFW_PRESS)){
+    (*info).rotate[0] -= 0.025;
+  }
 }
 
 void glCompileShaderOrDie(GLuint shader) {
@@ -176,7 +194,7 @@ int main(int argc, char* argv[]){
   glBindTexture(GL_TEXTURE_2D, texID);
   glUniform1i(tex_location, 0);
 
-  TransformInfo info ;
+  TransformInfo info = {{0,0,0},{0,0}};
   glfwSetWindowUserPointer(window, &info);
 
   while (!glfwWindowShouldClose(window))
@@ -195,7 +213,9 @@ int main(int argc, char* argv[]){
     mat4x4_identity(m);
     //mat4x4_scale(m, m, (float) glfwGetTime() *1000);
     mat4x4_translate(m, info.translate[0], info.translate[1], 0);
-    //mat4x4_rotate_Z(m, m, info.rotate[2]);
+    mat4x4_rotate_Z(m, m, info.rotate[2]);
+    mat4x4_rotate_Y(m, m, info.rotate[1]);
+    mat4x4_rotate_X(m, m, info.rotate[0]);
     mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
     mat4x4_mul(mvp, p, m);
 
