@@ -81,6 +81,12 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     if(mods == GLFW_MOD_CONTROL){
       (*info).shear[0] -= 0.025;
     }
+    else if(mods == GLFW_MOD_ALT){
+      (*info).scale -= 0.025;
+      if((*info).scale <= 0){
+        (*info).scale = 0.01;
+      }
+    }
     else{
       (*info).translate[1] -= 0.025;
     }
@@ -88,6 +94,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
   else if(key == GLFW_KEY_UP && (action == GLFW_REPEAT || action == GLFW_PRESS)){
     if(mods == GLFW_MOD_CONTROL){
       (*info).shear[0] += 0.025;
+    }
+    else if(mods == GLFW_MOD_ALT){
+      (*info).scale += 0.025;
     }
     else{
       (*info).translate[1] += 0.025;
@@ -111,15 +120,17 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
   else if((key == GLFW_KEY_2 || key == GLFW_KEY_KP_2) && (action == GLFW_REPEAT || action == GLFW_PRESS)){
     (*info).rotate[0] -= 0.025;
   }
-  else if(key == GLFW_KEY_Q && (action == GLFW_REPEAT || action == GLFW_PRESS)){
-    (*info).scale += 0.025;
+  else if(key == GLFW_KEY_R && action == GLFW_PRESS){
+    (*info).translate[0] = 0;
+    (*info).translate[1] = 0;
+    (*info).scale = 1;
+    (*info).rotate[0] = 0;
+    (*info).rotate[1] = 0;
+    (*info).rotate[2] = 0;
+    (*info).shear[0] = 0;
+    (*info).shear[1] = 0;
   }
-  else if(key == GLFW_KEY_W && (action == GLFW_REPEAT || action == GLFW_PRESS)){
-    (*info).scale -= 0.025;
-    if((*info).scale <= 0){
-      (*info).scale = 0.01;
-    }
-  }
+
 }
 
 void glCompileShaderOrDie(GLuint shader) {
