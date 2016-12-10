@@ -20,6 +20,7 @@ typedef struct{
   float rotate[3];
   float translate[2];
   float scale;
+  float shear[2];
 } TransformInfo;
 
 Vertex vertexes[] = {
@@ -61,16 +62,36 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     glfwSetWindowShouldClose(window, GLFW_TRUE);
   }
   else if(key == GLFW_KEY_LEFT && (action == GLFW_REPEAT || action == GLFW_PRESS)){
-    (*info).translate[0] -= 0.025;
+    if(mods == GLFW_MOD_CONTROL){
+      (*info).shear[1] -= 0.025;
+    }
+    else{
+      (*info).translate[0] -= 0.025;
+    }
   }
   else if(key == GLFW_KEY_RIGHT && (action == GLFW_REPEAT || action == GLFW_PRESS)){
-    (*info).translate[0] += 0.025;
+    if(mods == GLFW_MOD_CONTROL){
+      (*info).shear[1] += 0.025;
+    }
+    else{
+      (*info).translate[0] += 0.025;
+    }
   }
   else if(key == GLFW_KEY_DOWN && (action == GLFW_REPEAT || action == GLFW_PRESS)){
-    (*info).translate[1] -= 0.025;
+    if(mods == GLFW_MOD_CONTROL){
+      (*info).shear[0] -= 0.025;
+    }
+    else{
+      (*info).translate[1] -= 0.025;
+    }
   }
   else if(key == GLFW_KEY_UP && (action == GLFW_REPEAT || action == GLFW_PRESS)){
-    (*info).translate[1] += 0.025;
+    if(mods == GLFW_MOD_CONTROL){
+      (*info).shear[0] += 0.025;
+    }
+    else{
+      (*info).translate[1] += 0.025;
+    }
   }
   else if((key == GLFW_KEY_1 || key == GLFW_KEY_KP_1) && (action == GLFW_REPEAT || action == GLFW_PRESS)){
     (*info).rotate[2] += 0.025;
@@ -204,7 +225,7 @@ int main(int argc, char* argv[]){
   glBindTexture(GL_TEXTURE_2D, texID);
   glUniform1i(tex_location, 0);
 
-  TransformInfo info = {{0,0,0},{0,0},1};
+  TransformInfo info = {{0,0,0},{0,0},1,{0,0}};
   glfwSetWindowUserPointer(window, &info);
 
   while (!glfwWindowShouldClose(window))
@@ -226,6 +247,7 @@ int main(int argc, char* argv[]){
     mat4x4_rotate_Y(m, m, info.rotate[1]);
     mat4x4_rotate_X(m, m, info.rotate[0]);
     mat4x4_scale_aniso(m, m, info.scale, info.scale, 1);
+    mat4x4_shear(m, m, info.shear[0], info.shear[1], 0, 0, 0, 0);
     mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
 
     mat4x4_mul(mvp, p, m);

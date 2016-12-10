@@ -263,6 +263,15 @@ static inline void mat4x4_rotate_Z(mat4x4 Q, mat4x4 M, float angle)
 	};
 	mat4x4_mul(Q, M, R);
 }
+static inline void mat4x4_shear(mat4x4 Q, mat4x4 M, float hxy, float hyx, float hxz, float hzx, float hyz, float hzy){
+	mat4x4 S ={
+		{ 1.f, hxy, hxz, 0.f},
+		{ hyx, 1.f, hyz, 0.f},
+		{ hzx, hzy, 1.f, 0.f},
+		{ 0.f, 0.f, 0.f, 1.f}
+	};
+	mat4x4_mul(Q, M, S);
+}
 static inline void mat4x4_invert(mat4x4 T, mat4x4 M)
 {
 	float s[6];
