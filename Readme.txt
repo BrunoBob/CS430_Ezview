@@ -19,3 +19,5 @@ Commands :
 	-Scale : 	ALT + up or down
 
 	-Shear :	CTRL + directional arrows
+
+	-Reset image :	R
